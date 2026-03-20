@@ -1,0 +1,23 @@
+# This is a Revit shared parameter file.
+# Do not edit header structure manually unless you know what you're doing.
+
+*META	VERSION	MINVERSION
+META	2	1
+
+*GROUP	ID	NAME
+GROUP	1	Material_Environmental
+GROUP	2	Material_Manufacturer
+GROUP	3	Material_Technical
+
+*PARAM	GUID	NAME	DATATYPE	DATACATEGORY	GROUP	VISIBLE	DESCRIPTION	USERMODIFIABLE	HIDEWHENNOVALUE
+
+PARAM	11111111-2222-3333-4444-555555555555	EmbodiedCarbon	NUMBER		1	1	Total embodied carbon (kgCO2/m3)	1	0
+PARAM	22222222-3333-4444-5555-666666666666	GlobalWarmingPotential	NUMBER		1	1	GWP A1-A3 (kgCO2e/m3)	1	0
+PARAM	33333333-4444-5555-6666-777777777777	RecycledContent	NUMBER		1	1	Recycled content (%)	1	0
+
+PARAM	aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee	Manufacturer	TEXT		2	1	Material manufacturer name	1	0
+PARAM	bbbbbbbb-cccc-dddd-eeee-ffffffffffff	ProductCode	TEXT		2	1	Manufacturer product code	1	0
+PARAM	cccccccc-dddd-eeee-ffff-111111111111	EPDReference	TEXT		2	1	Environmental Product Declaration reference	1	0
+
+PARAM	44444444-5555-6666-7777-888888888888	YoungModulusNegative	NUMBER		3	1	Declared Young's modulus (Pa)	1	0
+PARAM	55555555-6666-7777-8888-999999999999	DryDensity	NUMBER		3	1	Declared density (kg/m3)	1	0

@@ -21,6 +21,10 @@ import Autodesk.Revit.DB.Structure as DBStr
 from pyrevit import revit, framework, script
 import os, sys
 from lib_TransformUtils import TransactionCM
+from lib_snaptgridpt import snap_to_grid, GridIntersectionCache, pick_point
+config = script.get_config("SelectedCol")
+saved_family = getattr(config, "col_family", None)
+saved_type   = getattr(config, "col_type", None)
 
 
 
@@ -49,12 +53,29 @@ def main():
         Zlevs.append(elev_internal)
         Ilevs.append(lvl)
         #print(f"**{lvl.Name}**: {elev_internal:.3f} feet")
+    #-- retrieve data and check if exists
+    saved_symbol = None
+    if saved_family and saved_type:
+        collector = (
+            FilteredElementCollector(doc)
+            .OfClass(FamilySymbol)
+            .OfCategory(BuiltInCategory.OST_StructuralColumns)
+        )
 
+        for sym in collector:
+            if sym.Family.Name == saved_family and sym.Name == saved_type:
+                saved_symbol = sym
+                break
+    
+    default_type_id = doc.GetDefaultFamilyTypeId(ElementId(BuiltInCategory.OST_StructuralColumns))
+    default_symbol = doc.GetElement(default_type_id)
 
 
     with TransactionCM(doc,'Create Analytical Member'):
         #t.Start()
-        p1= uidoc.Selection.PickPoint("Pick start grid point")
+        p1_raw= uidoc.Selection.PickPoint("Pick a grid intersection")
+        cache = GridIntersectionCache(doc)
+        p1 = snap_to_grid(doc, p1_raw, cache)
         #p1c = Point.Create(p1)
         levldiff=[abs(x-p1.Z) for x in Zlevs]
         indz1=argmin(levldiff) #identify current level
@@ -69,14 +90,13 @@ def main():
             line = Line.CreateBound(p1,p2)
             col_height = Z2 - p1.Z
             # Get Default Beam Type
-            column_type_id   = doc.GetDefaultFamilyTypeId(ElementId(BuiltInCategory.OST_StructuralColumns))
-            column_type      = doc.GetElement(column_type_id)
-            if not column_type.IsActive:
-                column_type.Activate()
+            symbol_to_use = saved_symbol if saved_symbol else default_symbol
+            if not symbol_to_use.IsActive:
+                symbol_to_use.Activate()
                 doc.Regenerate()
             column = doc.Create.NewFamilyInstance(
             p1, #it would be a line
-            column_type,
+            symbol_to_use,
             active_level,
             DBStr.StructuralType.Column) #physical member
             doc.Regenerate()   # <-- critical for 2024–2026 analytical AP
@@ -95,6 +115,7 @@ def main():
 
 #print("Hello TEST")
 # Execute the main function
+
 
 
 
