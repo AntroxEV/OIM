@@ -77,7 +77,8 @@ def ensure_parameters_bound(
             raise Exception("Shared parameter group '{}' not found.".format(group_name))
 
         for definition in group.Definitions:
-            print(definition.Name)
+            print('definition -binding:', definition.Name)
+            print('XXX')
             existing_binding = binding_map.get_Item(definition)
 
             if existing_binding:

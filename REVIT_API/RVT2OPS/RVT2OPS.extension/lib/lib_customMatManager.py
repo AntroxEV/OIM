@@ -55,8 +55,9 @@ def set_param_by_guid(element, guid, value, param_type=None):
         raise ValueError(f"Failed to set parameter {param.Definition.Name}: {e}")
 
 def create_material(doc, name, parameter_values=None):
-    ensure_material_parameters_bound(doc)
-    with TransactionCM(doc,'Create Material'):
+    with TransactionCM(doc,'Create New Material'):
+        ensure_material_parameters_bound(doc)
+        print("Creating material with name:", name)
         material_id = Material.Create(doc, name)
         material = doc.GetElement(material_id)
 
