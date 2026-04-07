@@ -1,6 +1,6 @@
 #! python3
 # -*- coding: utf-8 -*-
-__title__   = "Create Columns"
+__title__   = "Create Column"
 __doc__ = """Version = 0.0
 __________________________________________________________________
 Description:
@@ -15,7 +15,7 @@ _____________________________________________________________________
 Author: Dr Alessandro Tombari https://antroxev.github.io/"""
 
 #====================================================================================================
-from Autodesk.Revit.DB import *
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, FamilySymbol, ElementId, Line, XYZ, BuiltInParameter, Level, Document
 from Autodesk.Revit.UI import UIApplication, TaskDialog
 import Autodesk.Revit.DB.Structure as DBStr
 from pyrevit import revit, framework, script
@@ -25,6 +25,9 @@ from lib_snaptgridpt import snap_to_grid, GridIntersectionCache, pick_point
 config = script.get_config("SelectedCol")
 saved_family = getattr(config, "col_family", None)
 saved_type   = getattr(config, "col_type", None)
+saved_Id = getattr(config, "col_symbolId", None)
+cfg = script.get_config("SelectedMaterial")
+saved_material_id = getattr(cfg, "default_material_id", None)
 
 
 
@@ -45,7 +48,7 @@ def argmin(a):
 
 
 def main():
-    levels = FilteredElementCollector(doc).OfClass(Level)
+    levels = list(FilteredElementCollector(doc).OfClass(Level))
     Zlevs=[]
     Ilevs=[]
     for lvl in levels:
@@ -54,21 +57,27 @@ def main():
         Ilevs.append(lvl)
         #print(f"**{lvl.Name}**: {elev_internal:.3f} feet")
     #-- retrieve data and check if exists
-    saved_symbol = None
-    if saved_family and saved_type:
-        collector = (
-            FilteredElementCollector(doc)
-            .OfClass(FamilySymbol)
-            .OfCategory(BuiltInCategory.OST_StructuralColumns)
-        )
+    # saved_symbol = None
+    # if saved_family and saved_type:
+    #     collector = (
+    #         FilteredElementCollector(doc)
+    #         .OfClass(FamilySymbol)
+    #         .OfCategory(BuiltInCategory.OST_StructuralColumns)
+    #     )
 
-        for sym in collector:
-            if sym.Family.Name == saved_family and sym.Name == saved_type:
-                saved_symbol = sym
-                break
+    #     for sym in collector:
+    #         if sym.Family.Name == saved_family and sym.Name == saved_type:
+    #             saved_symbol = sym
+    #             break
+
+    # Alternative retrieval using saved_Id
+    saved_symbol = doc.GetElement(ElementId(saved_Id)) if saved_Id else None
     
     default_type_id = doc.GetDefaultFamilyTypeId(ElementId(BuiltInCategory.OST_StructuralColumns))
     default_symbol = doc.GetElement(default_type_id)
+
+    saved_material = revit.doc.GetElement(ElementId(saved_material_id)) if saved_material_id else None
+
 
 
     with TransactionCM(doc,'Create Analytical Member'):
@@ -107,7 +116,20 @@ def main():
             #print("STRUCTURAL TYPE:", column.StructuralType)
             #print("ID:", column.Id)
             column.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_PARAM).Set(top_level.Id)
-            DBStr.AnalyticalMember.Create(doc,line) #analytical member
+            analytical_column = DBStr.AnalyticalMember.Create(doc,line) #analytical member
+            analytical_column.StructuralRole = DBStr.AnalyticalStructuralRole.StructuralRoleColumn
+            analytical_column.SectionTypeId = symbol_to_use.Id
+            if saved_material is not None:
+                #print("Assigning material:", saved_material.Name)
+                analytical_column.MaterialId = saved_material.Id
+            else:
+                #print("No material assigned to column.")
+                pass
+
+            
+
+
+
         
         #t.Commit()
 

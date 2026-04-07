@@ -25,7 +25,10 @@ from lib_snaptgridpt import snap_to_closest_grid_point, pick_point
 config = script.get_config("SelectedBeam")
 saved_family = getattr(config, "beam_family", None)
 saved_type   = getattr(config, "beam_type", None)
-print(config.__dict__)
+saved_Id = getattr(config, "beam_symbolId", None)
+cfg = script.get_config("SelectedMaterial")
+saved_material_id = getattr(cfg, "default_material_id", None)
+#print(config.__dict__)
 
 
 
@@ -48,22 +51,26 @@ def argmin(a):
 
 def main():
     #-- retrieve data and check if exists
-    saved_symbol = None
-    if saved_family and saved_type:
-        collector = (
-            FilteredElementCollector(doc)
-            .OfClass(FamilySymbol)
-            .OfCategory(BuiltInCategory.OST_StructuralFraming)
-        )
+    # saved_symbol = None
+    # if saved_family and saved_type:
+    #     collector = (
+    #         FilteredElementCollector(doc)
+    #         .OfClass(FamilySymbol)
+    #         .OfCategory(BuiltInCategory.OST_StructuralFraming)
+    #     )
 
-        for sym in collector:
-            if sym.Family.Name == saved_family and sym.Name == saved_type:
-                saved_symbol = sym
-                break
+    #     for sym in collector:
+    #         if sym.Family.Name == saved_family and sym.Name == saved_type:
+    #             saved_symbol = sym
+    #             break
+    
+    # Alternative retrieval using saved_Id
+    saved_symbol = doc.GetElement(ElementId(saved_Id)) if saved_Id else None
     
     default_type_id = doc.GetDefaultFamilyTypeId(ElementId(BuiltInCategory.OST_StructuralFraming))
     default_symbol = doc.GetElement(default_type_id)
 
+    saved_material = revit.doc.GetElement(ElementId(saved_material_id)) if saved_material_id else None
 
     with TransactionCM(doc,'Create Analytical Member'):
         #t.Start()
@@ -96,8 +103,12 @@ def main():
         active_level,
         DBStr.StructuralType.Beam) #physical member
         doc.Regenerate()   # <-- critical for 2024–2026 analytical AP
-        DBStr.AnalyticalMember.Create(doc,line) #analytical member
-        
+        analytical_beam = DBStr.AnalyticalMember.Create(doc,line) #analytical member
+        analytical_beam.StructuralRole = DBStr.AnalyticalStructuralRole.StructuralRoleBeam
+        analytical_beam.SectionTypeId = symbol_to_use.Id
+        if saved_material is not None:
+            analytical_beam.MaterialId = saved_material.Id
+  
         #t.Commit()
 
 #print('p1',p1.X,p1.Y,p1.Z,'p2c',p2c)
