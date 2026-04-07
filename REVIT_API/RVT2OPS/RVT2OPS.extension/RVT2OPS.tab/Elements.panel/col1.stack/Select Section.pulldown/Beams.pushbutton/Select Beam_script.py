@@ -1,6 +1,6 @@
 #! python3
 # -*- coding: utf-8 -*-
-__title__   = "Select Beams"
+__title__   = "Select Beam Cross-Section"
 __doc__ = """Version = 0.0
 __________________________________________________________________
 Description:
@@ -15,7 +15,7 @@ _____________________________________________________________________
 Author: Dr Alessandro Tombari https://antroxev.github.io/"""
 
 #====================================================================================================
-from Autodesk.Revit.DB import *
+from Autodesk.Revit.DB import FilteredElementCollector, FamilySymbol, BuiltInCategory
 from Autodesk.Revit.UI import UIApplication
 from pyrevit import revit, framework, script
 import os,sys
@@ -30,6 +30,7 @@ doc     = __revit__.ActiveUIDocument.Document #type: Document
 config = script.get_config("SelectedBeam")
 beam_family = getattr(config, "beam_family", None)
 beam_type = getattr(config, "beam_type", None)
+beam_symbolId = getattr(config, "beam_symbolId", None)
 #====================================================================================================
 
 
@@ -113,6 +114,7 @@ def on_ok(sender, args):
         # Save new defaults
         config.beam_family = fam
         config.beam_type = typ
+        config.beam_symbolId = selected_symbol.Id.IntegerValue
         script.save_config()
         #print("Saved:", config.beam_family, config.beam_type)
 

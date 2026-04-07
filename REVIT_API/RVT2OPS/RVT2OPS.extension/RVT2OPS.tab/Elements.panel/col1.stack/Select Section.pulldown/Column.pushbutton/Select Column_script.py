@@ -1,10 +1,10 @@
 #! python3
 # -*- coding: utf-8 -*-
-__title__   = "Select Columns"
+__title__   = "Select Column Cross-Section"
 __doc__ = """Version = 0.0
 __________________________________________________________________
 Description:
-Select faimily types for structural columns
+Select family types for structural columns
 
 _____________________________________________________________________
 Last update:
@@ -15,7 +15,7 @@ _____________________________________________________________________
 Author: Dr Alessandro Tombari https://antroxev.github.io/"""
 
 #====================================================================================================
-from Autodesk.Revit.DB import *
+from Autodesk.Revit.DB import FilteredElementCollector, FamilySymbol, BuiltInCategory
 from Autodesk.Revit.UI import UIApplication
 from pyrevit import revit, framework, script
 import os,sys
@@ -30,6 +30,7 @@ doc     = __revit__.ActiveUIDocument.Document #type: Document
 config = script.get_config("SelectedCol")
 col_family = getattr(config, "col_family", None)
 col_type = getattr(config, "col_type", None)
+col_symbolId = getattr(config, "col_symbolId", None)
 #====================================================================================================
 
 
@@ -113,6 +114,7 @@ def on_ok(sender, args):
         # Save new defaults
         config.col_family = fam
         config.col_type = typ
+        config.col_symbolId = selected_symbol.Id.IntegerValue
         script.save_config()
 
         window.Close()
